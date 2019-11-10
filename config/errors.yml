@@ -1,0 +1,73 @@
+errors:
+  commands:
+    command:
+      unknown:
+    content:
+      unparsable:
+  common:
+    app_key:
+      forbidden: 'https://github.com/jdr-tools/wiki/wiki/Common-errors#application-not-premium'
+      required: 'https://github.com/jdr-tools/wiki/wiki/Common-errors#application-key-not-given'
+      unknown: 'https://github.com/jdr-tools/wiki/wiki/Common-errors#application-key-not-found'
+    token:
+      required: 'https://github.com/jdr-tools/wiki/wiki/Common-errors#gateway-token-not-given'
+      unknown: 'https://github.com/jdr-tools/wiki/wiki/Common-errors#gateway-token-not-found'
+  creation:
+    title:
+      minlength: 'https://github.com/jdr-tools/wiki/wiki/Campaigns-API#title-too-short'
+      required: 'https://github.com/jdr-tools/wiki/wiki/Campaigns-API#campaign-id-not-found'
+      uniq: 'https://github.com/jdr-tools/wiki/wiki/Campaigns-API#title-not-uniq-for-this-user'
+  deletion:
+    campaign_id:
+      unknown: 'https://github.com/jdr-tools/wiki/wiki/Campaigns-API#campaign-id-not-found-3'
+    session_id:
+      required: ''
+      unknown: ''
+  informations:
+    campaign_id:
+      unknown: 'https://github.com/jdr-tools/wiki/wiki/Campaigns-API#campaign-id-not-found'
+    session_id:
+      required: ''
+      unknown: ''
+  invitations:
+    campaign_id:
+      unknown: 'https://github.com/jdr-tools/wiki/wiki/Campaigns-API#campaign-id-not-found-1'
+    session_id:
+      required: ''
+      unknown: ''
+  list:
+    session_id:
+      required: ''
+      unknown: ''
+  own_list:
+    session_id:
+      required: ''
+      unknown: ''
+  update:
+    campaign_id:
+      unknown: 'https://github.com/jdr-tools/wiki/wiki/Campaigns-API#campaign-id-not-found-2'
+    session_id:
+      required: ''
+      unknown: ''
+    title:
+      minlength: 'https://github.com/jdr-tools/wiki/wiki/Campaigns-API#title-too-short-1'
+      required: 'https://github.com/jdr-tools/wiki/wiki/Campaigns-API#campaign-id-not-found-1'
+      uniq: 'https://github.com/jdr-tools/wiki/wiki/Campaigns-API#title-not-uniq-for-this-user-1'
+  messages:
+    campaign_id:
+      unknown: 'https://github.com/jdr-tools/wiki/wiki/Campaigns-API#campaign-id-not-found-2'
+    content:
+      required: ''
+      empty: ''
+    session_id:
+      required: ''
+      unknown: ''
+  messages_list:
+    campaign_id:
+      unknown: 'https://github.com/jdr-tools/wiki/wiki/Campaigns-API#campaign-id-not-found-2'
+    content:
+      required: ''
+      empty: ''
+    session_id:
+      required: ''
+      unknown: ''

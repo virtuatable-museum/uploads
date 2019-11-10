@@ -1,0 +1,16 @@
+development:
+  clients:
+    default:
+      database: arkaan
+      hosts:
+        - localhost:27017
+test:
+  clients:
+    default:
+      database: arkaan_test
+      hosts:
+        - localhost:27017
+production:
+  clients:
+    default:
+      uri: <%= ENV['MONGODB_URL'] %>
