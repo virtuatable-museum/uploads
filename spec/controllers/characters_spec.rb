@@ -12,6 +12,9 @@ RSpec.describe Controllers::Characters do
   let!(:campaign) { create(:campaign, creator: account) }
   let!(:content) { 'data:application/xml;base64,dGVzdApzYXV0IGRlIGxpZ25lIGV0IGVzcGFjZXM=' }
 
+  let!(:michel) { create(:account, username: 'Michel', email: 'michel@mail.com') }
+  let!(:invitation) { create(:invitation, campaign: campaign, account: michel, enum_status: :accepted) }
+
   # Creation of a new character in a campaign.
   describe 'POST /uploads/characters' do
     describe 'Nominal case' do
@@ -22,7 +25,8 @@ RSpec.describe Controllers::Characters do
           name: 'test.dnd4e',
           token: gateway.token,
           app_key: appli.key,
-          session_id: session.token
+          session_id: session.token,
+          invitation_id: invitation.id
         }
       end
       it 'Returns a 201 (created) Status code ' do
@@ -32,10 +36,11 @@ RSpec.describe Controllers::Characters do
         expect(last_response.body).to include_json(message: 'created')
       end
       it 'Creates the character in the database' do
-        expect(Services::Characters.list(campaign).count).to be 1
+        expect(campaign.characters.count).to be 1
       end
       it 'Creates the character in AWS S3' do
-        expect(Services::Characters.instance.stored?(campaign, 'test.dnd4e')).to be true
+        name = "#{campaign.id}/characters/test.dnd4e"
+        expect(Services::Amazon.instance.stored?(name)).to be true
       end
     end
 
@@ -43,6 +48,31 @@ RSpec.describe Controllers::Characters do
 
     describe 'errors' do
       describe '400 errors' do
+        describe 'Invitation ID not given' do
+          before do
+            post '/uploads/characters', {
+              campaign_id: campaign.id.to_s,
+              content: content,
+              name: 'test.dnd4e',
+              token: gateway.token,
+              app_key: appli.key,
+              session_id: session.token
+            }
+          end
+          it 'Returns a 400 (Bad Request) Status code' do
+            expect(last_response.status).to be 400
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json(
+              status: 400,
+              field: 'invitation_id',
+              error: 'required'
+            )
+          end
+          it 'Has not created the character in the database' do
+            expect(campaign.characters.count).to be 0
+          end
+        end
         describe 'Name not given' do
           before do
             post '/uploads/characters', {
@@ -50,7 +80,8 @@ RSpec.describe Controllers::Characters do
               content: content,
               token: gateway.token,
               app_key: appli.key,
-              session_id: session.token
+              session_id: session.token,
+              invitation_id: invitation.id
             }
           end
           it 'Returns a Bad Request (400) status code' do
@@ -64,7 +95,7 @@ RSpec.describe Controllers::Characters do
             )
           end
           it 'Did not create the file in the database' do
-            expect(Services::Characters.list(campaign).count).to be 0
+            expect(campaign.characters.count).to be 0
           end
         end
         describe 'Content not given' do
@@ -74,7 +105,8 @@ RSpec.describe Controllers::Characters do
               name: 'test.dnd4e',
               token: gateway.token,
               app_key: appli.key,
-              session_id: session.token
+              session_id: session.token,
+              invitation_id: invitation.id
             }
           end
           it 'Returns a Bad Request (400) status code' do
@@ -88,7 +120,7 @@ RSpec.describe Controllers::Characters do
             )
           end
           it 'Did not create the file in the database' do
-            expect(Services::Characters.list(campaign).count).to be 0
+            expect(campaign.characters.count).to be 0
           end
         end
         describe 'Campaign ID not given' do
@@ -98,7 +130,8 @@ RSpec.describe Controllers::Characters do
               name: 'test.dnd4e',
               token: gateway.token,
               app_key: appli.key,
-              session_id: session.token
+              session_id: session.token,
+              invitation_id: invitation.id
             }
           end
           it 'Returns a Bad Request (400) status code' do
@@ -112,7 +145,7 @@ RSpec.describe Controllers::Characters do
             )
           end
           it 'Did not create the file in the database' do
-            expect(Services::Characters.list(campaign).count).to be 0
+            expect(campaign.characters.count).to be 0
           end
         end
         # This error is a bit tricky to trigger as the campaign needs to be in a ruleset
@@ -130,7 +163,8 @@ RSpec.describe Controllers::Characters do
               name: 'test.dnd4e',
               token: gateway.token,
               app_key: appli.key,
-              session_id: session.token
+              session_id: session.token,
+              invitation_id: invitation.id
             }
           end
           it 'Returns a 400 (Bad Request) error' do
@@ -144,12 +178,11 @@ RSpec.describe Controllers::Characters do
             )
           end
           it 'Did not create the file in the database' do
-            expect(Services::Characters.list(campaign).count).to be 0
+            expect(campaign.characters.count).to be 0
           end
         end
       end
       describe '403 errors' do
-        let!(:michel) { create(:account, username: 'Michel', email: 'michel@mail.com') }
         let!(:michel_session) { create(:session, account: michel, token: 'michel token') }
 
         describe 'When the account is not invited in the campaign' do
@@ -160,7 +193,8 @@ RSpec.describe Controllers::Characters do
               name: 'test.dnd4e',
               token: gateway.token,
               app_key: appli.key,
-              session_id: michel_session.token
+              session_id: michel_session.token,
+              invitation_id: invitation.id
             }
           end
           it 'Returns a 403 (Forbidden) status code' do
@@ -174,7 +208,7 @@ RSpec.describe Controllers::Characters do
             )
           end
           it 'Did not create the character in the campaign' do
-            expect(Services::Characters.list(campaign).count).to be 0
+            expect(campaign.characters.count).to be 0
           end
         end
         describe 'When the account is not creator of the campaign' do
@@ -187,7 +221,8 @@ RSpec.describe Controllers::Characters do
               name: 'test.dnd4e',
               token: gateway.token,
               app_key: appli.key,
-              session_id: michel_session.token
+              session_id: michel_session.token,
+              invitation_id: invitation.id
             }
           end
           it 'Returns a 403 (Forbidden) status code' do
@@ -201,11 +236,34 @@ RSpec.describe Controllers::Characters do
             )
           end
           it 'Did not create the character in the campaign' do
-            expect(Services::Characters.list(campaign).count).to be 0
+            expect(campaign.characters.count).to be 0
           end
         end
       end
       describe '404 errors' do
+        describe 'When the invitation does not exist in the campaign' do
+          before do
+            post '/uploads/characters', {
+              content: content,
+              campaign_id: campaign.id.to_s,
+              name: 'test.dnd4e',
+              token: gateway.token,
+              app_key: appli.key,
+              session_id: session.token,
+              invitation_id: 'pouet pouet'
+            }
+          end
+          it 'Returns a 404 (Not Found) Status code' do
+            expect(last_response.status).to be 404
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json(
+              status: 404,
+              field: 'invitation_id',
+              error: 'unknown'
+            )
+          end
+        end
         describe 'When the session does not exist' do
           before do
             post '/uploads/characters', {
@@ -214,7 +272,8 @@ RSpec.describe Controllers::Characters do
               name: 'test.dnd4e',
               token: gateway.token,
               app_key: appli.key,
-              session_id: 'pouet pouet'
+              session_id: 'pouet pouet',
+              invitation_id: invitation.id
             }
           end
           it 'Returns a 404 (Not Found) Status code' do
@@ -236,7 +295,8 @@ RSpec.describe Controllers::Characters do
               name: 'test.dnd4e',
               token: gateway.token,
               app_key: appli.key,
-              session_id: session.token
+              session_id: session.token,
+              invitation_id: invitation.id
             }
           end
           it 'Returns a 404 (Not Found) Status code' do

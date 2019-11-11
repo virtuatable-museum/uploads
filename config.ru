@@ -11,6 +11,7 @@ Aws.config.update({
 })
 
 require 'services/module'
+require 'controllers/base'
 
 $stdout.sync = true
 
