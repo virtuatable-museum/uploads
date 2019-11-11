@@ -1,19 +1,3 @@
-PATH
-  remote: ../arkaan
-  specs:
-    arkaan (1.8.0)
-      actionview (= 5.2.3)
-      activemodel (= 5.2.3)
-      activesupport (= 5.2.3)
-      bcrypt (= 3.1.11)
-      dotenv (= 2.7.2)
-      draper (= 3.1.0)
-      faraday (= 0.15.2)
-      mongoid (= 7.0.1)
-      platform-api (= 2.1.0)
-      sinatra (= 2.0.5)
-      sinatra-contrib (= 2.0.5)
-
 GEM
   remote: https://rubygems.org/
   specs:
@@ -43,6 +27,18 @@ GEM
       tzinfo (~> 1.1)
     airbrussh (1.4.0)
       sshkit (>= 1.6.1, != 1.7.0)
+    arkaan (1.9.0)
+      actionview (= 5.2.3)
+      activemodel (= 5.2.3)
+      activesupport (= 5.2.3)
+      bcrypt (= 3.1.11)
+      dotenv (= 2.7.2)
+      draper (= 3.1.0)
+      faraday (= 0.15.2)
+      mongoid (= 7.0.1)
+      platform-api (= 2.1.0)
+      sinatra (= 2.0.5)
+      sinatra-contrib (= 2.0.5)
     ast (2.4.0)
     aws-eventstream (1.0.3)
     aws-partitions (1.237.0)
@@ -986,7 +982,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  arkaan!
+  arkaan (= 1.9.0)
   aws-sdk (= 3.0.1)
   bcrypt (= 3.1.11)
   capistrano (= 3.11.0)
