@@ -8,9 +8,11 @@ RSpec.describe Controllers::Characters do
   let!(:gateway) { create(:gateway) }
   let!(:appli) { create(:application, creator: account) }
   let!(:session) { create(:session, account: account) }
+  let!(:amazon) { Services::Amazon.instance }
 
   let!(:campaign) { create(:campaign, creator: account) }
-  let!(:content) { 'data:application/xml;base64,dGVzdApzYXV0IGRlIGxpZ25lIGV0IGVzcGFjZXM=' }
+  let!(:base_content) { 'dGVzdApzYXV0IGRlIGxpZ25lIGV0IGVzcGFjZXM=' }
+  let!(:content) { "data:application/xml;base64,#{base_content}" }
 
   let!(:michel) { create(:account, username: 'Michel', email: 'michel@mail.com') }
   let!(:invitation) { create(:invitation, campaign: campaign, account: michel, enum_status: :accepted) }
@@ -38,9 +40,16 @@ RSpec.describe Controllers::Characters do
       it 'Creates the character in the database' do
         expect(campaign.characters.count).to be 1
       end
-      it 'Creates the character in AWS S3' do
-        name = "#{campaign.id}/characters/test.dnd4e"
-        expect(Services::Amazon.instance.stored?(name)).to be true
+      describe 'Created file on AWS' do
+        let!(:character_id) { JSON.parse(last_response.body)['id'] }
+        let!(:name) { "#{campaign.id}/characters/#{character_id}" }
+
+        it 'Creates the character in AWS S3' do
+          expect(amazon.stored?(name)).to be true
+        end
+        it 'Has the correct content' do
+          expect(amazon.content(name)).to eq Base64.decode64(base_content)
+        end
       end
     end
 

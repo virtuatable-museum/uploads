@@ -49,8 +49,8 @@ module Services
         false
       end
 
-      def store(campaign, filename, content)
-        key = fullname(campaign, filename)
+      def store(campaign, entity, content)
+        key = fullname(campaign, entity)
         body = Base64.decode64(content.split(',', 2).last)
         amazon.store(key, body)
       end
@@ -65,8 +65,8 @@ module Services
         content.split(';', 2).first.split(':', 2).last
       end
 
-      def fullname(campaign, filename)
-        "#{campaign.id}/#{directory}/#{filename}"
+      def fullname(campaign, entity)
+        "#{campaign.id}/#{directory}/#{entity.id}"
       end
     end
   end

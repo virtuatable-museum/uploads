@@ -15,7 +15,7 @@ module Controllers
       model_error(document, action) unless document.save
       
       begin
-        service.store(campaign, params['name'], params['content'])
+        service.store(campaign, document, params['content'])
         service.update_size(document)
         halt 201, Decorators::File.new(document).to_json
       rescue StandardError => exception
