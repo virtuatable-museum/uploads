@@ -18,7 +18,7 @@ module Controllers
       model_error(character, action) unless character.save
       
       begin
-        service.store(campaign, params['name'], params['content'])
+        service.store(campaign, character, params['content'])
         halt 201, Decorators::File.new(character).to_json
       rescue StandardError => exception
         service.down(character)

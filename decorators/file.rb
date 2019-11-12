@@ -10,6 +10,7 @@ module Decorators
     def to_h
       {
         message: 'created',
+        id: file.id.to_s,
         name: file.name,
         type: file.mime_type
       }

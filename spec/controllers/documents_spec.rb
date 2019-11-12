@@ -37,10 +37,7 @@ RSpec.describe Controllers::Documents do
       campaign.reload
       expect(campaign.documents.count).to be 1
     end
-    it 'has created the document on AWS' do
-      name = "#{campaign.id}/documents/test.txt"
-      expect(Services::Amazon.instance.stored?(name)).to be true
-    end
+
     describe 'document parameters' do
       it 'has created a document with the correct name' do
         expect(campaign.documents.first.name).to eq 'test.txt'
@@ -51,11 +48,13 @@ RSpec.describe Controllers::Documents do
     end
 
     describe 'AWS created document' do
-      let(:file_content) {
-        name = "#{campaign.id}/documents/test.txt"
-        Services::Amazon.instance.content(name)
-      }
+      let!(:document_id) { JSON.parse(last_response.body)['id'] }
+      let!(:name) { "#{campaign.id}/documents/#{document_id}" }
+      let(:file_content) { Services::Amazon.instance.content(name) }
 
+      it 'has created the document on AWS' do
+        expect(Services::Amazon.instance.stored?(name)).to be true
+      end
       it 'has the correct content' do
         expect(file_content).to eq Base64.decode64(content.split(',', 2).last)
       end
@@ -87,10 +86,6 @@ RSpec.describe Controllers::Documents do
             error: 'required'
           })
         end
-        it 'has not created the corresponding document' do
-          name = "#{campaign.id}/documents/test.txt"
-          expect(Services::Amazon.instance.stored?(name)).to be false
-        end
       end
       describe 'filename not given' do
         before do
@@ -112,10 +107,6 @@ RSpec.describe Controllers::Documents do
             field: 'name',
             error: 'required'
           })
-        end
-        it 'has not created the corresponding document' do
-          name = "#{campaign.id}/documents/test.txt"
-          expect(Services::Amazon.instance.stored?(name)).to be false
         end
       end
       describe 'invalid MIME type' do
@@ -139,10 +130,6 @@ RSpec.describe Controllers::Documents do
             field: 'mime_type',
             error: 'pattern'
           })
-        end
-        it 'has not created the corresponding document' do
-          name = "#{campaign.id}/documents/test.txt"
-          expect(Services::Amazon.instance.stored?(name)).to be false
         end
       end
       describe 'Impossibility to store the document' do
@@ -196,10 +183,6 @@ RSpec.describe Controllers::Documents do
             field: 'session_id',
             error: 'forbidden'
           })
-        end
-        it 'has not created the corresponding document' do
-          name = "#{campaign.id}/documents/test.txt"
-          expect(Services::Amazon.instance.stored?(name)).to be false
         end
       end
     end

@@ -16,7 +16,7 @@ module Services
     end
 
     def update_size(document)
-      size = amazon.size(fullname(campaign, document.name))
+      size = amazon.size(fullname(campaign, document))
       document.update_attribute(:size, size)
     end
 
