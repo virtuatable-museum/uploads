@@ -322,4 +322,300 @@ RSpec.describe Controllers::Characters do
       end
     end
   end
+
+  # Getting the file content for the character as raw text
+  describe 'GET /uploads/characters/:id' do
+    let!(:jacques) { create(:account, username: 'Jacques', email: 'jacques@test.com') }
+    let!(:session_jacques) { create(:session, account: jacques, token: 'token_jacques') }
+
+    describe 'Nominal case' do
+      let!(:invitation) { create(:invitation, campaign: campaign, enum_status: :accepted, account: jacques) }
+      let!(:character) { create(:character, invitation: invitation) }
+      before do
+        amazon.store("#{campaign.id.to_s}/characters/#{character.id.to_s}", Base64.decode64(base_content))
+        get "/uploads/characters/#{character.id.to_s}", {
+          token: gateway.token,
+          app_key: appli.key,
+          session_id: 'token_jacques',
+          campaign_id: campaign.id.to_s
+        }
+      end
+      it 'Returns a OK (200) status code' do
+        expect(last_response.status).to be 200
+      end
+      it 'Returns the correct body' do
+        expect(last_response.body).to eq Base64.decode64(base_content)
+      end
+    end
+    describe 'errors' do
+      describe '400 errors' do
+        let!(:invitation) { create(:invitation, campaign: campaign, enum_status: :accepted, account: jacques) }
+        let!(:character) { create(:character, invitation: invitation) }
+        describe 'Campaign ID not given' do
+          before do
+            get "/uploads/characters/#{character.id.to_s}", {
+              token: gateway.token,
+              app_key: appli.key,
+              session_id: 'token_jacques'
+            }
+          end
+          it 'Returns a 400 (Bad Request) status code' do
+            expect(last_response.status).to be 400
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json({
+              status: 400,
+              field: 'campaign_id',
+              error: 'required'
+            })
+          end
+        end
+        describe 'Session ID not given' do
+          before do
+            get "/uploads/characters/#{character.id.to_s}", {
+              token: gateway.token,
+              app_key: appli.key,
+              campaign_id: campaign.id.to_s
+            }
+          end
+          it 'Returns a 400 (Bad Request) status code' do
+            expect(last_response.status).to be 400
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json({
+              status: 400,
+              field: 'session_id',
+              error: 'required'
+            })
+          end
+        end
+      end
+      describe '403 errors' do
+        let!(:ferdinand) { create(:account, username: 'ferdinand', email: 'ferdinand@test.com') }
+        let!(:session_ferdinand) { create(:session, token: 'session_ferdinand', account: ferdinand) }
+
+        describe 'When the invitation is :expelled' do
+          let!(:invitation) { create(:invitation, campaign: campaign, account: ferdinand, enum_status: :expelled) }
+          let!(:character) { create(:character, invitation: invitation) }
+          before do
+            get "/uploads/characters/#{character.id.to_s}", {
+              session_id: 'session_ferdinand',
+              campaign_id: campaign.id.to_s,
+              token: gateway.token,
+              app_key: appli.key
+            }
+          end
+          it 'Returns a 403 (Forbidden) status code' do
+            expect(last_response.status).to be 403
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json({
+              status: 403,
+              field: 'session_id',
+              error: 'forbidden'
+            })
+          end
+        end
+        describe 'When the invitation is :pending' do
+          let!(:invitation) { create(:invitation, campaign: campaign, account: ferdinand, enum_status: :pending) }
+          let!(:character) { create(:character, invitation: invitation) }
+          before do
+            get "/uploads/characters/#{character.id.to_s}", {
+              session_id: 'session_ferdinand',
+              campaign_id: campaign.id.to_s,
+              token: gateway.token,
+              app_key: appli.key
+            }
+          end
+          it 'Returns a 403 (Forbidden) status code' do
+            expect(last_response.status).to be 403
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json({
+              status: 403,
+              field: 'session_id',
+              error: 'forbidden'
+            })
+          end
+        end
+        describe 'When the invitation is :request' do
+          let!(:invitation) { create(:invitation, campaign: campaign, account: ferdinand, enum_status: :request) }
+          let!(:character) { create(:character, invitation: invitation) }
+          before do
+            get "/uploads/characters/#{character.id.to_s}", {
+              session_id: 'session_ferdinand',
+              campaign_id: campaign.id.to_s,
+              token: gateway.token,
+              app_key: appli.key
+            }
+          end
+          it 'Returns a 403 (Forbidden) status code' do
+            expect(last_response.status).to be 403
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json({
+              status: 403,
+              field: 'session_id',
+              error: 'forbidden'
+            })
+          end
+        end
+        describe 'When the invitation is :left' do
+          let!(:invitation) { create(:invitation, campaign: campaign, account: ferdinand, enum_status: :left) }
+          let!(:character) { create(:character, invitation: invitation) }
+          before do
+            get "/uploads/characters/#{character.id.to_s}", {
+              session_id: 'session_ferdinand',
+              campaign_id: campaign.id.to_s,
+              token: gateway.token,
+              app_key: appli.key
+            }
+          end
+          it 'Returns a 403 (Forbidden) status code' do
+            expect(last_response.status).to be 403
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json({
+              status: 403,
+              field: 'session_id',
+              error: 'forbidden'
+            })
+          end
+        end
+        describe 'When the invitation is :blocked' do
+          let!(:invitation) { create(:invitation, campaign: campaign, account: ferdinand, enum_status: :blocked) }
+          let!(:character) { create(:character, invitation: invitation) }
+          before do
+            get "/uploads/characters/#{character.id.to_s}", {
+              session_id: 'session_ferdinand',
+              campaign_id: campaign.id.to_s,
+              token: gateway.token,
+              app_key: appli.key
+            }
+          end
+          it 'Returns a 403 (Forbidden) status code' do
+            expect(last_response.status).to be 403
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json({
+              status: 403,
+              field: 'session_id',
+              error: 'forbidden'
+            })
+          end
+        end
+        describe 'When the invitation is :ignored' do
+          let!(:invitation) { create(:invitation, campaign: campaign, account: ferdinand, enum_status: :ignored) }
+          let!(:character) { create(:character, invitation: invitation) }
+          before do
+            get "/uploads/characters/#{character.id.to_s}", {
+              session_id: 'session_ferdinand',
+              campaign_id: campaign.id.to_s,
+              token: gateway.token,
+              app_key: appli.key
+            }
+          end
+          it 'Returns a 403 (Forbidden) status code' do
+            expect(last_response.status).to be 403
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json({
+              status: 403,
+              field: 'session_id',
+              error: 'forbidden'
+            })
+          end
+        end
+        describe 'When the invitation is :refused' do
+          let!(:invitation) { create(:invitation, campaign: campaign, account: ferdinand, enum_status: :refused) }
+          let!(:character) { create(:character, invitation: invitation) }
+          before do
+            get "/uploads/characters/#{character.id.to_s}", {
+              session_id: 'session_ferdinand',
+              campaign_id: campaign.id.to_s,
+              token: gateway.token,
+              app_key: appli.key
+            }
+          end
+          it 'Returns a 403 (Forbidden) status code' do
+            expect(last_response.status).to be 403
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json({
+              status: 403,
+              field: 'session_id',
+              error: 'forbidden'
+            })
+          end
+        end
+      end
+      describe '404 errors' do
+        let!(:ferdinand) { create(:account, username: 'ferdinand', email: 'ferdinand@test.com') }
+        let!(:session_ferdinand) { create(:session, token: 'session_ferdinand', account: ferdinand) }
+        let!(:ferdinand_inv) { create(:invitation, campaign: campaign, account: ferdinand, enum_status: :accepted) }
+        let!(:character) { create(:character, invitation: ferdinand_inv) }
+        
+        describe 'When the campaign is not found' do
+          before do
+            get "/uploads/characters/#{character.id}", {
+              campaign_id: 'test unknown',
+              token: gateway.token,
+              app_key: appli.key,
+              session_id: session_ferdinand.token
+            }
+          end
+          it 'Returns a 404 (Not Found) status code' do
+            expect(last_response.status).to be 404
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json(
+              status: 404,
+              field: 'campaign_id',
+              error: 'unknown'
+            )
+          end
+        end
+        describe 'When the session is not found' do
+          before do
+            get "/uploads/characters/#{character.id}", {
+              campaign_id: campaign.id.to_s,
+              token: gateway.token,
+              app_key: appli.key,
+              session_id: 'token unknown'
+            }
+          end
+          it 'Returns a 404 (Not Found) status code' do
+            expect(last_response.status).to be 404
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json(
+              status: 404,
+              field: 'session_id',
+              error: 'unknown'
+            )
+          end
+        end
+        describe 'When the character is not found' do
+          before do
+            get "/uploads/characters/unknown", {
+              campaign_id: campaign.id.to_s,
+              token: gateway.token,
+              app_key: appli.key,
+              session_id: session_ferdinand.token
+            }
+          end
+          it 'Returns a 404 (Not Found) status code' do
+            expect(last_response.status).to be 404
+          end
+          it 'Returns the correct body' do
+            expect(last_response.body).to include_json(
+              status: 404,
+              field: 'character_id',
+              error: 'unknown'
+            )
+          end
+        end
+      end
+    end
+  end
 end

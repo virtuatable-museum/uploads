@@ -11,7 +11,7 @@ module Controllers
       check_presence 'campaign_id', 'name', 'content', 'invitation_id', route: action
       session = check_session(action)
       check_campaign(action)
-      check_invitation(action)
+      check_invitation(action, invitation)
       check_privileges(session: session, campaign: campaign, action: action)
 
       character = service.persist(invitation, params['name'], params['content'])
@@ -26,20 +26,39 @@ module Controllers
       end
     end
 
+    declare_route 'get', '/characters/:character_id' do
+      action = 'character_get'
+      check_presence 'campaign_id', route: action
+      session = check_session(action)
+      check_campaign(action)
+
+      campaign = Arkaan::Campaign.where(id: params['campaign_id']).first
+      invitation = session_invitation(session)
+
+      if invitation.nil? || ![:creator, :accepted].include?(invitation.status)
+        custom_error 403, 'character_get.session_id.forbidden'
+      end
+      character = campaign.characters.find do |character|
+        character.id.to_s == params['character_id']
+      end
+      custom_error 404, 'character_get.character_id.unknown' if character.nil?
+      halt 200, Services::Amazon.instance.content("#{campaign.id.to_s}/characters/#{character.id.to_s}")
+    end
+
     def service_class
       Services::Characters
     end
 
-    def action
-      'character_creation'
-    end
-
-    def check_invitation(action)
-      custom_error(404, 'character_creation.invitation_id.unknown') if invitation.nil?
+    def check_invitation(action, invitation)
+      custom_error(404, "#{action}.invitation_id.unknown") if invitation.nil?
     end
 
     def invitation
       campaign.invitations.where(id: params['invitation_id']).first
+    end
+
+    def session_invitation(session)
+      campaign.invitations.where(account: session.account).first
     end
   end
 end

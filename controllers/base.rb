@@ -28,7 +28,7 @@ module Controllers
     end
 
     def session
-      check_session(action)
+      Arkaan::Authentication::Session.where(token: params['session_id']).first
     end
 
     def check_campaign(action)
